@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ahorcado - Versión Cristiana</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117; --panel: #161b22; --text: #58a6ff;
+            --danger: #f85149; --success: #3fb950; --disabled: #484f58; --warning: #d29922;
+            --gold: #ffd700;
+        }
+        * { box-sizing: border-box; touch-action: manipulation; }
+        
+        body {
+            font-family: 'Open Sans', sans-serif; background-color: var(--bg); color: white;
+            margin: 0; padding: 0; width: 100vw; height: 100vh;
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        .banner-top, .banner-bottom {
+            width: 100%; height: 50px; background: #000;
+            display: flex; align-items: center; justify-content: center;
+            border: 1px solid #333; font-size: 0.6rem; color: #444; flex-shrink: 0;
+        }
+
+        #pantalla-inicio {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1c2a38 0%, #0d1117 100%);
+            z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 20px;
+        }
+        .cruz-logo { font-size: 60px; color: var(--gold); animation: pulse 2s infinite; }
+        
+        #contenedor-juego {
+            display: none; flex: 1; flex-direction: column; 
+            justify-content: space-between; align-items: center; width: 100%;
+            max-height: calc(100vh - 100px); /* Ajuste para ver ambos banners */
+        }
+
+        .stats { 
+            display: flex; gap: 15px; background: var(--panel); 
+            padding: 8px; width: 100%; justify-content: center; 
+            font-size: 0.9rem; border-bottom: 1px solid #30363d;
+        }
+        
+        #timer { font-weight: bold; }
+        .timer-verde { color: var(--success); }
+        .timer-blanco { color: white; }
+
+        #hangman-canvas {
+            font-family: monospace; white-space: pre; background: #000;
+            padding: 10px; border-radius: 8px; border: 1px solid var(--text);
+            color: #58a6ff; font-size: 0.9rem; line-height: 1.1; margin: 5px 0;
+        }
+
+        #word-display { font-size: 1.4rem; letter-spacing: 3px; font-weight: bold; margin: 5px 0; text-align: center; }
+        #pista-texto { color: #8b949e; font-style: italic; text-align: center; font-size: 0.8rem; padding: 0 10px; }
+
+        #keyboard { 
+            display: grid; grid-template-columns: repeat(7, 1fr); 
+            gap: 3px; width: 95%; max-width: 400px;
+        }
+        #keyboard button { 
+            padding: 10px 0; border: none; border-radius: 4px; 
+            background: #21262d; color: white; font-weight: bold; font-size: 0.9rem;
+        }
+        #keyboard button:disabled { opacity: 0.2; }
+
+        .controls { display: flex; gap: 8px; width: 95%; max-width: 400px; margin-bottom: 5px; }
+        .btn-action { flex: 1; padding: 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 0.8rem; color: white; cursor: pointer; }
+        
+        .btn-pista { background: var(--warning); color: black; }
+        .btn-pista-ad { background: var(--text); color: white; }
+
+        .sugerencia-activa { 
+            animation: glow-gold 1s infinite alternate !important; 
+            box-shadow: 0 0 15px var(--gold);
+        }
+
+        @keyframes glow-gold {
+            from { transform: scale(1); background: var(--warning); }
+            to { transform: scale(1.05); background: var(--gold); }
+        }
+
+        .btn-home { background: var(--danger); }
+
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; z-index: 2500; }
+        .modal { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            background: var(--panel); border: 2px solid var(--text); padding: 20px; 
+            border-radius: 12px; z-index: 2600; text-align: center; width: 85%; max-width: 300px; display: none; 
+        }
+        .ad-progress { width: 100%; background: #000; height: 8px; border-radius: 4px; margin: 15px 0; overflow: hidden; display: none; }
+        #ad-bar { width: 0%; height: 100%; background: var(--warning); }
+
+        @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+    </style>
+</head>
+<body>
+
+<div id="pantalla-inicio">
+    <div class="cruz-logo">✝</div>
+    <h1 style="font-family:'Playfair Display'; margin:0;">AHORCADO</h1>
+    <div style="color:var(--text); margin-bottom:20px;">(versión cristiana)</div>
+    <button class="btn-action" style="background:var(--success); flex:none; padding:15px 40px;" onclick="comenzarJuego()">EMPEZAR</button>
+</div>
+
+<div id="contenedor-juego">
+    <div class="banner-top">PUBLICIDAD SUPERIOR</div>
+
+    <div class="stats">
+        <div id="timer" class="timer-verde">⏱️ 00:00</div>
+        <div id="vidas">❤️❤️❤️❤️</div>
+        <div id="puntos">🪙 0</div>
+    </div>
+
+    <div id="hangman-canvas">
+  +---+
+  |   |
+<span id="p-cabeza">      |</span>
+<span id="p-cuerpo">      |</span>
+<span id="p-brazos">      |</span>
+<span id="p-piernas">      |</span>
+=========</div>
+
+    <div id="pista-texto">Pista cargando...</div>
+    <div id="word-display">_ _ _ _</div>
+
+    <div id="keyboard"></div>
+
+    <div class="controls">
+        <button id="btn-revelar" class="btn-action btn-pista" onclick="manejarPista()">🔍 Pista</button>
+        <button class="btn-action btn-home" onclick="volverInicio()">🏠 INICIO</button>
+    </div>
+
+    <div class="banner-bottom">PUBLICIDAD INFERIOR</div>
+</div>
+
+<div id="overlay" class="overlay"></div>
+<div id="custom-modal" class="modal">
+    <p id="modal-text" style="font-size: 0.9rem;"></p>
+    <div class="ad-progress"><div id="ad-bar"></div></div>
+    <div id="modal-buttons" style="display: flex; flex-direction: column; gap: 8px;"></div>
+</div>
+
+<script>
+    const palabras = [
+        {p: "JESUCRISTO", t: "El hijo de Dios y Salvador"}, {p: "MOISES", t: "Lideró al pueblo en el Mar Rojo"},
+        {p: "ABRAHAM", t: "El padre de la fe"}, {p: "DAVID", t: "Venció al gigante Goliat"},
+        {p: "JERUSALEN", t: "La ciudad santa"}, {p: "GENESIS", t: "El libro de los comienzos"},
+        {p: "PABLO", t: "Apóstol que escribió muchas cartas"}, {p: "MANA", t: "Pan del cielo"},
+        {p: "BENDICION", t: "Favor y gracia divina"}, {p: "APOCALIPSIS", t: "Libro de revelaciones"},
+        {p: "JORDAN", t: "Río donde fue bautizado Jesús"}, {p: "SALOMON", t: "El rey más sabio"},
+        {p: "SANSON", t: "Su fuerza estaba en su cabello"}, {p: "NOE", t: "Construyó el arca"},
+        {p: "DANIEL", t: "En el foso de los leones"}, {p: "JONAS", t: "En el vientre de un gran pez"},
+        {p: "JOSE", t: "Tenía una túnica de colores"}, {p: "MARIA", t: "La madre de Jesús"},
+        {p: "PEDRO", t: "El pescador que negó a Jesús"}, {p: "JUAN", t: "El discípulo amado"},
+        {p: "LAZARO", t: "Amigo de Jesús resucitado"}, {p: "BELEN", t: "Donde nació el Salvador"},
+        {p: "GOLGOTA", t: "Lugar de la crucifixión"}, {p: "EDEN", t: "El jardín del principio"},
+        {p: "SINAÍ", t: "Monte de los diez mandamientos"}, {p: "MATEO", t: "Primer evangelio"},
+        {p: "MARCOS", t: "Segundo evangelio"}, {p: "LUCAS", t: "El médico amado"},
+        {p: "HECHOS", t: "Historia de la iglesia primitiva"}, {p: "ROMANOS", t: "Carta sobre la justificación"},
+        {p: "CORINTIOS", t: "Carta sobre el amor"}, {p: "GALATAS", t: "Fruto del Espíritu"},
+        {p: "EFESIOS", t: "La armadura de Dios"}, {p: "FILIPENSES", t: "El gozo en el Señor"},
+        {p: "COLOSENSES", t: "La preeminencia de Cristo"}, {p: "TESALONICENSES", t: "La venida del Señor"},
+        {p: "TIMOTEO", t: "Joven pastor discípulo de Pablo"}, {p: "TITO", t: "Instrucciones para ancianos"},
+        {p: "FILEMON", t: "Carta sobre la reconciliación"}, {p: "HEBREOS", t: "Héroes de la fe"},
+        {p: "SANTIAGO", t: "La fe sin obras es muerta"}, {p: "JUDAS", t: "Breve carta sobre la apostasía"},
+        {p: "EXODO", t: "Salida de Egipto"}, {p: "LEVITICO", t: "Leyes de santidad"},
+        {p: "NUMEROS", t: "Censo en el desierto"}, {p: "DEUTERONOMIO", t: "Repetición de la ley"},
+        {p: "JOSUE", t: "Conquistador de Jericó"}, {p: "JUECES", t: "Líderes antes de los reyes"},
+        {p: "RUT", t: "Nuera fiel de Noemí"}, {p: "SAMUEL", t: "El profeta que ungió a David"},
+        {p: "REYES", t: "Crónicas de los monarcas"}, {p: "ESTHER", t: "Reina que salvó a su pueblo"},
+        {p: "JOB", t: "Ejemplo de paciencia"}, {p: "SALMOS", t: "Libro de cantos y poemas"},
+        {p: "PROVERBIOS", t: "Dichos de sabiduría"}, {p: "ECLESIASTES", t: "Todo tiene su tiempo"},
+        {p: "CANTARES", t: "Poema de amor salomónico"}, {p: "ISAIAS", t: "El profeta mesiánico"},
+        {p: "JEREMIAS", t: "El profeta llorón"}, {p: "LAMENTACIONES", t: "Duelo por Jerusalén"},
+        {p: "EZEQUIEL", t: "Visión de los huesos secos"}, {p: "OSEAS", t: "Profeta del amor fiel"},
+        {p: "JOEL", t: "Promesa del Espíritu Santo"}, {p: "AMOS", t: "Profeta de la justicia"},
+        {p: "ABDIAS", t: "Profecía contra Edom"}, {p: "MIQUEAS", t: "Anunció el nacimiento en Belén"},
+        {p: "NAHUM", t: "Profecía contra Nínive"}, {p: "HABACUC", t: "El justo por su fe vivirá"},
+        {p: "SOFONIAS", t: "El día del Señor"}, {p: "HAGEO", t: "Reconstrucción del templo"},
+        {p: "ZACARIAS", t: "Visiones nocturnas"}, {p: "MALAQUIAS", t: "Último libro del AT"},
+        {p: "ARCA", t: "Símbolo de salvación y pacto"}, {p: "PENTECOSTES", t: "Venida del Espíritu Santo"},
+        {p: "RESURRECCION", t: "Victoria sobre la muerte"}, {p: "MESIAS", t: "El ungido esperado"},
+        {p: "SANTIDAD", t: "Vivir apartado para Dios"}, {p: "GRACIA", t: "Favor inmerecido"},
+        {p: "REDENCION", t: "Rescate por la libertad"}, {p: "SACRIFICIO", t: "Ofrenda por el pecado"},
+        {p: "PROFETAS", t: "Mensajeros de Dios"}, {p: "EVANGELIO", t: "Buenas nuevas"},
+        {p: "DISCIPULOS", t: "Seguidores de Jesús"}, {p: "APOSTOLES", t: "Enviados a predicar"},
+        {p: "PARABOLA", t: "Historia con enseñanza espiritual"}, {p: "MILAGRO", t: "Hecho sobrenatural de Dios"},
+        {p: "TENTACION", t: "Prueba de la fe"}, {p: "ORACION", t: "Hablar con Dios"},
+        {p: "AYUNO", t: "Abstinencia espiritual"}, {p: "ALABANZA", t: "Canto de adoración"},
+        {p: "TEMPLO", t: "Casa de oración"}, {p: "SINAGOGA", t: "Lugar de reunión judío"},
+        {p: "FARISEOS", t: "Maestros de la ley"}, {p: "GENTILES", t: "Personas no judías"},
+        {p: "PACTO", t: "Alianza entre Dios y el hombre"}, {p: "TABERNACULO", t: "Santuario en el desierto"},
+        {p: "CENA", t: "Recuerdo del sacrificio de Cristo"}, {p: "BAUTISMO", t: "Símbolo de nueva vida"},
+        {p: "MISIONES", t: "Llevar la palabra al mundo"}, {p: "IGLESIA", t: "Cuerpo de creyentes"}
+    ];
+
+    let banco = [...palabras].sort(() => Math.random() - 0.5);
+    let indice = 0, palabra = "", adivinado = [], vidas = 4, puntos = parseInt(localStorage.getItem('puntos')) || 0;
+    let segundos = 0, timerGlobal, anunciosVidasRonda = 0, anunciosPistasRonda = 0;
+    let inactividadSegundos = 0;
+
+    function comenzarJuego() {
+        document.getElementById('pantalla-inicio').style.display = 'none';
+        document.getElementById('contenedor-juego').style.display = 'flex';
+        iniciarNivel();
+        iniciarTimer();
+    }
+
+    function volverInicio() {
+        clearInterval(timerGlobal);
+        cerrarModal();
+        document.getElementById('contenedor-juego').style.display = 'none';
+        document.getElementById('pantalla-inicio').style.display = 'flex';
+        indice = 0;
+        banco = [...palabras].sort(() => Math.random() - 0.5);
+    }
+
+    function iniciarNivel() {
+        if (indice >= banco.length) {
+            mostrarAviso("✨ ¡Victoria final!", [{t: "REINICIAR", f: volverInicio}]);
+            return;
+        }
+        vidas = 4; anunciosVidasRonda = 0; anunciosPistasRonda = 0; segundos = 0; inactividadSegundos = 0;
+        palabra = banco[indice].p;
+        adivinado = Array(palabra.length).fill("_");
+        document.getElementById('pista-texto').innerText = `Pista: ${banco[indice].t}`;
+        document.getElementById('btn-revelar').classList.remove('sugerencia-activa');
+        actualizarUI();
+        resetearDibujo();
+        generarTeclado();
+    }
+
+    function actualizarUI() {
+        document.getElementById('word-display').innerText = adivinado.join(' ');
+        document.getElementById('vidas').innerText = "❤️".repeat(vidas);
+        document.getElementById('puntos').innerText = `🪙 ${puntos}`;
+        localStorage.setItem('puntos', puntos);
+        
+        const btnP = document.getElementById('btn-revelar');
+        if (puntos >= 100) {
+            btnP.innerText = "🔍 Pista (100 pts)";
+            btnP.classList.add('btn-pista');
+            btnP.classList.remove('btn-pista-ad');
+            btnP.style.opacity = "1";
+        } else if (anunciosPistasRonda < 2) {
+            btnP.innerText = "📺 Pista Gratis (Ad)";
+            btnP.classList.remove('btn-pista');
+            btnP.classList.add('btn-pista-ad');
+            btnP.style.opacity = "1";
+        } else {
+            btnP.innerText = "🔍 Sin Pistas";
+            btnP.style.opacity = "0.5";
+            btnP.classList.remove('sugerencia-activa');
+        }
+    }
+
+    function generarTeclado() {
+        const kb = document.getElementById('keyboard'); kb.innerHTML = "";
+        "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split('').forEach(l => {
+            const b = document.createElement('button'); b.innerText = l;
+            b.id = "key-" + l;
+            b.onclick = () => procesarLetra(l);
+            kb.appendChild(b);
+        });
+    }
+
+    function procesarLetra(l) {
+        inactividadSegundos = 0;
+        document.getElementById('btn-revelar').classList.remove('sugerencia-activa');
+
+        const btn = document.getElementById("key-" + l);
+        if(!btn || btn.disabled) return;
+        btn.disabled = true;
+
+        if (palabra.includes(l)) {
+            for(let i=0; i<palabra.length; i++) if(palabra[i] === l) adivinado[i] = l;
+            document.getElementById('word-display').innerText = adivinado.join(' ');
+            if (!adivinado.includes("_")) ganar();
+        } else {
+            vidas--;
+            if (navigator.vibrate) navigator.vibrate(100);
+            actualizarDibujo(); actualizarUI();
+            if (vidas <= 0) perder();
+        }
+    }
+
+    function manejarPista() {
+        inactividadSegundos = 0;
+        document.getElementById('btn-revelar').classList.remove('sugerencia-activa');
+        if (puntos >= 100) {
+            aplicarPista();
+            puntos -= 100;
+            actualizarUI();
+        } else if (anunciosPistasRonda < 2) {
+            mostrarAviso("¿Ver anuncio para una pista?", [
+                {t: "📺 VER ANUNCIO", f: () => verAnuncioRecompensa('pista')},
+                {t: "CANCELAR", f: cerrarModal}
+            ]);
+        }
+    }
+
+    function aplicarPista() {
+        let ocultas = [];
+        for(let i=0; i<palabra.length; i++) if(adivinado[i] === "_") ocultas.push(palabra[i]);
+        if (ocultas.length > 0) {
+            procesarLetra(ocultas[Math.floor(Math.random() * ocultas.length)]);
+        }
+    }
+
+    function ganar() {
+        let premio = (segundos < 60) ? 25 : 15;
+        puntos += premio;
+        mostrarAviso(`✨😇 ¡Correcto! +${premio} pts`, [{t: "SIGUIENTE", f: () => { indice++; iniciarNivel(); cerrarModal(); }}]);
+    }
+
+    function perder() {
+        let opciones = [{t: "🏠 INICIO", f: volverInicio}];
+        if (anunciosVidasRonda < 2) opciones.unshift({t: "📺 REVIVIR (Ad)", f: () => verAnuncioRecompensa('vida')});
+        mostrarAviso("🙏📖 Te quedaste sin vidas.", opciones);
+    }
+
+    function verAnuncioRecompensa(tipo) {
+        const btnC = document.getElementById('modal-buttons');
+        const prog = document.querySelector('.ad-progress');
+        const bar = document.getElementById('ad-bar');
+        btnC.innerHTML = ""; prog.style.display = 'block'; bar.style.width = '0%';
+        let t = 15;
+        const interval = setInterval(() => {
+            t--;
+            bar.style.width = `${((15-t)/15)*100}%`;
+            document.getElementById('modal-text').innerText = `📺 Recompensa en... ${t}s`;
+            if (t <= 0) {
+                clearInterval(interval);
+                prog.style.display = 'none';
+                cerrarModal();
+                if (tipo === 'vida') { anunciosVidasRonda++; vidas = 1; document.getElementById('p-piernas').innerText = "      |"; }
+                else { anunciosPistasRonda++; aplicarPista(); }
+                actualizarUI();
+            }
+        }, 1000);
+    }
+
+    function mostrarAviso(txt, btns) {
+        document.getElementById('modal-text').innerText = txt;
+        const c = document.getElementById('modal-buttons'); c.innerHTML = "";
+        btns.forEach(b => {
+            const btn = document.createElement('button'); btn.innerText = b.t;
+            btn.className = "btn-action";
+            btn.style.background = (b.t.includes("INICIO") || b.t.includes("CANCELAR")) ? "var(--danger)" : "var(--success)";
+            btn.onclick = b.f; c.appendChild(btn);
+        });
+        document.getElementById('overlay').style.display = 'block';
+        document.getElementById('custom-modal').style.display = 'block';
+    }
+
+    function cerrarModal() {
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('custom-modal').style.display = 'none';
+    }
+
+    function iniciarTimer() {
+        if(timerGlobal) clearInterval(timerGlobal);
+        timerGlobal = setInterval(() => {
+            segundos++;
+            inactividadSegundos++;
+
+            if (inactividadSegundos >= 30) {
+                const btnP = document.getElementById('btn-revelar');
+                if (btnP.style.opacity !== "0.5") {
+                    btnP.classList.add('sugerencia-activa');
+                    if (inactividadSegundos === 30 && navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                }
+            }
+
+            let s = segundos % 60, m = Math.floor(segundos / 60);
+            const timerEl = document.getElementById('timer');
+            timerEl.innerText = `⏱️ ${m<10?'0':''}${m}:${s<10?'0':''}${s}`;
+            timerEl.className = (segundos < 60) ? "timer-verde" : "timer-blanco";
+            
+            if (segundos >= 30 && segundos % 10 === 0 && navigator.vibrate) navigator.vibrate(50);
+        }, 1000);
+    }
+
+    function actualizarDibujo() {
+        const d = {3:['p-cabeza',"  O   |"], 2:['p-cuerpo',"  |   |"], 1:['p-brazos'," /|\\  |"], 0:['p-piernas'," / \\  |"]};
+        if(d[vidas]) document.getElementById(d[vidas][0]).innerText = d[vidas][1];
+    }
+
+    function resetearDibujo() {
+        ["p-cabeza", "p-cuerpo", "p-brazos", "p-piernas"].forEach(id => document.getElementById(id).innerText = "      |");
+    }
+</script>
+</body>
+</html>
