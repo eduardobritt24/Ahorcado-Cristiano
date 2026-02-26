@@ -108,7 +108,12 @@
 </div>
 
 <div id="contenedor-juego">
-    <div class="banner-top">PUBLICIDAD SUPERIOR</div>
+    <div class="banner-top">
+        <script type="text/javascript">
+            atOptions = { 'key' : '725e0e3c6456bf7e4c7c972858bf8558', 'format' : 'iframe', 'height' : 50, 'width' : 320, 'params' : {} };
+        </script>
+        <script type="text/javascript" src="https://www.highperformanceformat.com/725e0e3c6456bf7e4c7c972858bf8558/invoke.js"></script>
+    </div>
 
     <div class="stats">
         <div id="timer" class="timer-verde">⏱️ 00:00</div>
@@ -135,7 +140,12 @@
         <button class="btn-action btn-home" onclick="volverInicio()">🏠 INICIO</button>
     </div>
 
-    <div class="banner-bottom">PUBLICIDAD INFERIOR</div>
+    <div class="banner-bottom">
+        <script type="text/javascript">
+            atOptions = { 'key' : 'c852d5edd8e9fac5466649011994a7a1', 'format' : 'iframe', 'height' : 60, 'width' : 468, 'params' : {} };
+        </script>
+        <script type="text/javascript" src="https://www.highperformanceformat.com/c852d5edd8e9fac5466649011994a7a1/invoke.js"></script>
+    </div>
 </div>
 
 <div id="overlay" class="overlay"></div>
@@ -146,6 +156,9 @@
 </div>
 
 <script>
+    // URL del Smartlink proporcionada
+    const SMARTLINK_URL = "https://www.effectivegatecpm.com/fmp6r64bn3?key=a66ec3da9d2b3d19839ff0258a8ff27d";
+
     const palabras = [
         {p: "JESUCRISTO", t: "El hijo de Dios y Salvador"}, {p: "MOISES", t: "Lideró al pueblo en el Mar Rojo"},
         {p: "ABRAHAM", t: "El padre de la fe"}, {p: "DAVID", t: "Venció al gigante Goliat"},
@@ -325,6 +338,9 @@
     }
 
     function verAnuncioRecompensa(tipo) {
+        // Abrir Smartlink en nueva pestaña
+        window.open(SMARTLINK_URL, '_blank');
+        
         const btnC = document.getElementById('modal-buttons');
         const prog = document.querySelector('.ad-progress');
         const bar = document.getElementById('ad-bar');
