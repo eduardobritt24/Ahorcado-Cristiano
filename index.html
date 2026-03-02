@@ -20,7 +20,7 @@
         }
 
         .banner-top, .banner-bottom {
-            width: 100%; height: 50px; background: #000;
+            width: 100%; min-height: 50px; background: #000;
             display: flex; align-items: center; justify-content: center;
             border: 1px solid #333; font-size: 0.6rem; color: #444; flex-shrink: 0;
         }
@@ -36,7 +36,7 @@
         #contenedor-juego {
             display: none; flex: 1; flex-direction: column; 
             justify-content: space-between; align-items: center; width: 100%;
-            max-height: calc(100vh - 100px); /* Ajuste para ver ambos banners */
+            max-height: calc(100vh - 100px);
         }
 
         .stats { 
@@ -110,9 +110,9 @@
 <div id="contenedor-juego">
     <div class="banner-top">
         <script type="text/javascript">
-            atOptions = { 'key' : '725e0e3c6456bf7e4c7c972858bf8558', 'format' : 'iframe', 'height' : 50, 'width' : 320, 'params' : {} };
+            atOptions = { 'key' : 'ad2991946c3199cb2eaace125aef8f31', 'format' : 'iframe', 'height' : 50, 'width' : 320, 'params' : {} };
         </script>
-        <script type="text/javascript" src="https://www.highperformanceformat.com/725e0e3c6456bf7e4c7c972858bf8558/invoke.js"></script>
+        <script type="text/javascript" src="https://www.highperformanceformat.com/ad2991946c3199cb2eaace125aef8f31/invoke.js"></script>
     </div>
 
     <div class="stats">
@@ -142,9 +142,9 @@
 
     <div class="banner-bottom">
         <script type="text/javascript">
-            atOptions = { 'key' : 'c852d5edd8e9fac5466649011994a7a1', 'format' : 'iframe', 'height' : 60, 'width' : 468, 'params' : {} };
+            atOptions = { 'key' : '076f7ca54999bfc03d1e299f523a1834', 'format' : 'iframe', 'height' : 60, 'width' : 468, 'params' : {} };
         </script>
-        <script type="text/javascript" src="https://www.highperformanceformat.com/c852d5edd8e9fac5466649011994a7a1/invoke.js"></script>
+        <script type="text/javascript" src="https://www.highperformanceformat.com/076f7ca54999bfc03d1e299f523a1834/invoke.js"></script>
     </div>
 </div>
 
@@ -156,8 +156,8 @@
 </div>
 
 <script>
-    // URL del Smartlink proporcionada
-    const SMARTLINK_URL = "https://www.effectivegatecpm.com/fmp6r64bn3?key=a66ec3da9d2b3d19839ff0258a8ff27d";
+    // Nuevo Smartlink Juegos-Cristianos
+    const SMARTLINK_URL = "https://www.effectivegatecpm.com/xajbftdp?key=54effdc0e6f2c1da9cae5b1f027b00ae";
 
     const palabras = [
         {p: "JESUCRISTO", t: "El hijo de Dios y Salvador"}, {p: "MOISES", t: "Lideró al pueblo en el Mar Rojo"},
@@ -338,7 +338,6 @@
     }
 
     function verAnuncioRecompensa(tipo) {
-        // Abrir Smartlink en nueva pestaña
         window.open(SMARTLINK_URL, '_blank');
         
         const btnC = document.getElementById('modal-buttons');
@@ -411,5 +410,6 @@
         ["p-cabeza", "p-cuerpo", "p-brazos", "p-piernas"].forEach(id => document.getElementById(id).innerText = "      |");
     }
 </script>
+
 </body>
 </html>
